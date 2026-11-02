@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>四人积分排名看板</title>
+<style>
+:root{--navy:#172b4d;--muted:#718096;--line:#e7edf5;--bg:#f4f7fb}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:#1e293b}
+.wrap{max-width:1080px;margin:auto;padding:26px 18px 48px}header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:20px}
+.eyebrow{font-size:12px;letter-spacing:2px;color:#64748b;font-weight:700}h1{font-size:clamp(24px,4vw,34px);margin:7px 0 5px;color:var(--navy)}
+.sub,.hint{color:var(--muted);font-size:13px}.pill{background:#e8f7ef;color:#16804f;border-radius:99px;padding:7px 12px;font-size:12px;font-weight:700}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}.stat,.panel{background:white;border:1px solid var(--line);border-radius:17px;box-shadow:0 5px 18px #1d355708}
+.stat{padding:16px}.name{font-size:13px;color:var(--muted)}.dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:6px}.stat strong{display:block;font-size:28px;margin-top:8px}
+.panel{padding:20px;margin-top:16px}.panelhead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}h2{font-size:17px;color:var(--navy);margin:0}
+.chartbox{position:relative}svg{width:100%;height:auto;display:block}.gridline{stroke:#e8edf4;stroke-width:1}.axis{fill:#8190a5;font-size:12px}
+.series{fill:none;stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round}.point{stroke:white;stroke-width:3;cursor:pointer}.endpoint{font-size:13px;font-weight:700}
+.tooltip{display:none;position:absolute;background:#14243d;color:white;padding:10px 12px;border-radius:10px;font-size:12px;line-height:1.7;pointer-events:none;z-index:5;box-shadow:0 8px 24px #0f172a30}
+.tablewrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:500px}th,td{text-align:left;padding:13px 12px;border-bottom:1px solid var(--line);font-size:14px}
+th{color:#738197;font-size:12px;background:#f8fafd}td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}.rank{font-weight:800;color:#526176}
+.up{color:#15945b}.down{color:#d74747}.same{color:#64748b}
+select,input,button{font:inherit;border-radius:10px;border:1px solid #dce4ee;padding:9px 11px;background:white;color:#243247}button{background:var(--navy);color:white;border:0;font-weight:650;cursor:pointer}
+.secondary{background:#eef3f9;color:var(--navy)}.rulegrid,.formgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.rule{background:#f8fafd;border:1px solid var(--line);border-radius:12px;padding:14px}
+.rule b{display:block;color:var(--navy);font-size:13px;margin-bottom:6px}.rule span{font-size:14px;line-height:1.6}
+.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}.field input{width:100%}.controls{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
+.note{font-size:12px;color:var(--muted);line-height:1.7;margin-top:12px}footer{text-align:center;color:#94a3b8;font-size:12px;margin-top:22px}
+@media(max-width:720px){.cards{grid-template-columns:repeat(2,1fr)}.panel{padding:15px}.rulegrid,.formgrid{grid-template-columns:1fr}header{align-items:flex-start;flex-direction:column}}
+</style></head><body><div class="wrap">
+<header><div><div class="eyebrow">SCOREBOARD · FOUR PLAYERS</div><h1>四人积分排名</h1><div class="sub" id="roundLabel"></div></div><div class="pill">● 数据看板 · 已内置首轮数据</div></header>
+<section class="cards" id="cards"><div class="stat"><div class="name"><i class="dot" style="background:#16A36A"></i>当前领先 · 栾汀策</div><strong>61</strong><span class="hint">累计积分</span></div>
+<div class="stat"><div class="name"><i class="dot" style="background:#9866D8"></i>第2名 · 刘梦涵</div><strong>40</strong><span class="hint">累计积分</span></div>
+<div class="stat"><div class="name"><i class="dot" style="background:#E49A35"></i>第3名 · 张加雨</div><strong>29</strong><span class="hint">累计积分</span></div>
+<div class="stat"><div class="name"><i class="dot" style="background:#3B82F6"></i>第4名 · 于梓宸</div><strong>-22</strong><span class="hint">累计积分</span></div></section>
+<section class="panel"><div class="panelhead"><h2>累计积分走势</h2><span class="hint">点击或悬停折线节点，查看当轮积分</span></div><div class="chartbox"><div id="tooltip" class="tooltip"></div><svg id="chart" viewBox="0 0 960 390" aria-label="四人累计积分折线图"><line class="gridline" x1="75" y1="55" x2="825" y2="55"/><line class="gridline" x1="75" y1="115" x2="825" y2="115"/>
+<line class="gridline" x1="75" y1="175" x2="825" y2="175"/><line class="gridline" x1="75" y1="235" x2="825" y2="235"/>
+<line class="gridline" x1="75" y1="295" x2="825" y2="295"/>
+<text class="axis" x="60" y="59" text-anchor="end">70</text><text class="axis" x="60" y="119" text-anchor="end">50</text>
+<text class="axis" x="60" y="179" text-anchor="end">30</text><text class="axis" x="60" y="239" text-anchor="end">10</text>
+<text class="axis" x="60" y="299" text-anchor="end">-10</text>
+<line x1="75" y1="28" x2="75" y2="330" stroke="#cbd5e1"/><line x1="75" y1="330" x2="825" y2="330" stroke="#cbd5e1"/>
+<text class="axis" x="450" y="365" text-anchor="middle">第1轮（目前仅录入一轮）</text>
+<circle cx="450" cy="292" r="7" fill="#3B82F6" stroke="white" stroke-width="3"/><text class="endpoint" x="470" y="296" fill="#3B82F6">于梓宸 -22</text>
+<circle cx="450" cy="82" r="7" fill="#16A36A" stroke="white" stroke-width="3"/><text class="endpoint" x="470" y="86" fill="#16A36A">栾汀策 61</text>
+<circle cx="450" cy="178" r="7" fill="#E49A35" stroke="white" stroke-width="3"/><text class="endpoint" x="470" y="182" fill="#E49A35">张加雨 29</text>
+<circle cx="450" cy="145" r="7" fill="#9866D8" stroke="white" stroke-width="3"/><text class="endpoint" x="470" y="149" fill="#9866D8">刘梦涵 40</text></svg></div><div class="hint">横轴：轮次　·　纵轴：累计积分　·　每位选手颜色固定</div></section>
+<section class="panel"><div class="panelhead"><h2>当前排名</h2><span class="hint">累计积分由高到低</span></div><div class="tablewrap"><table><thead><tr><th>排名</th><th>选手</th><th style="text-align:right">累计积分</th><th style="text-align:right">本轮积分</th><th style="text-align:right">排名变化</th></tr></thead><tbody id="ranking"><tr><td class="rank">1</td><td><b style="color:#16A36A">栾汀策</b></td><td class="num">61</td><td class="num">61</td><td class="num same">— 首轮</td></tr>
+<tr><td class="rank">2</td><td><b style="color:#9866D8">刘梦涵</b></td><td class="num">40</td><td class="num">40</td><td class="num same">— 首轮</td></tr>
+<tr><td class="rank">3</td><td><b style="color:#E49A35">张加雨</b></td><td class="num">29</td><td class="num">29</td><td class="num same">— 首轮</td></tr>
+<tr><td class="rank">4</td><td><b style="color:#3B82F6">于梓宸</b></td><td class="num">-22</td><td class="num">-22</td><td class="num same">— 首轮</td></tr></tbody></table></div></section>
+<section class="panel"><div class="panelhead"><h2>历史轮次查询</h2><select id="roundSelect"><option value="1">第 1 轮</option></select></div><div class="tablewrap"><table><thead><tr><th>排名</th><th>选手</th><th style="text-align:right">本轮积分</th><th style="text-align:right">截至该轮累计积分</th></tr></thead><tbody id="history"><tr><td class="rank">1</td><td><b style="color:#16A36A">栾汀策</b></td><td class="num">61</td><td class="num">61</td></tr>
+<tr><td class="rank">2</td><td><b style="color:#9866D8">刘梦涵</b></td><td class="num">40</td><td class="num">40</td></tr>
+<tr><td class="rank">3</td><td><b style="color:#E49A35">张加雨</b></td><td class="num">29</td><td class="num">29</td></tr>
+<tr><td class="rank">4</td><td><b style="color:#3B82F6">于梓宸</b></td><td class="num">-22</td><td class="num">-22</td></tr></tbody></table></div><p class="note" id="historySummary">第 1 轮结束时的排名与累计积分。</p></section>
+<section class="panel"><div class="panelhead"><h2>更新下一轮数据</h2><span class="hint">填写本轮新增积分，不是累计分</span></div><div class="formgrid" id="inputs"></div><div class="controls"><button id="addRound">保存并添加下一轮</button><button class="secondary" id="exportCsv">导出 CSV</button><button class="secondary" id="reset">恢复第一轮初始数据</button></div><p class="note">新增轮次保存在当前浏览器本地。若要让其他人也看到更新，请重新分享更新后的文件；不同设备不会自动同步。</p></section>
+<section class="panel"><div class="panelhead"><h2>积分规则</h2><span class="hint">每轮结束后结算</span></div><div class="rulegrid"><div class="rule"><b>每轮名次奖励</b><span>第1名 +40分；第2名 +30分；第3名 +20分；第4名 +10分。</span></div><div class="rule"><b>最终得分加成</b><span>本轮结束后的最终总得分 ÷ 10，作为额外加分。</span></div></div><p class="note">本轮积分 = 名次奖励 + 本轮最终总得分的十分之一。各轮本轮积分累加，形成最终累计排名。</p></section>
+<footer>四人积分排名看板 · 第一轮数据已录入</footer></div>
+<script>
+const players=[{name:"于梓宸",color:"#3B82F6"},{name:"栾汀策",color:"#16A36A"},{name:"张加雨",color:"#E49A35"},{name:"刘梦涵",color:"#9866D8"}];
+const initial=[[-22,61,29,40]];
+// file:// 或微信/QQ 内置浏览器可能禁止 localStorage；读取失败时仍使用内置第一轮数据。
+function safeLoad(){try{const raw=window.localStorage.getItem("fourPlayerRounds");if(!raw)return null;const parsed=JSON.parse(raw);return Array.isArray(parsed)&&parsed.length&&parsed.every(r=>Array.isArray(r)&&r.length===4&&r.every(v=>Number.isFinite(Number(v))))?parsed:null}catch(e){return null}}
+function safeSave(value){try{window.localStorage.setItem("fourPlayerRounds",JSON.stringify(value));return true}catch(e){return false}}
+let rounds=safeLoad()||initial.map(r=>r.slice());
+const $=id=>document.getElementById(id),fmt=n=>Number(n).toLocaleString("zh-CN",{maximumFractionDigits:2});
+const cumulative=()=>rounds.map((r,i)=>r.map((v,j)=>rounds.slice(0,i+1).reduce((s,x)=>s+Number(x[j]||0),0)));
+const totals=()=>cumulative().at(-1)||[0,0,0,0],ranking=v=>[0,1,2,3].sort((a,b)=>v[b]-v[a]);
+function renderCards(){let v=totals(),o=ranking(v);$("cards").innerHTML=o.map((j,k)=>`<div class="stat"><div class="name"><i class="dot" style="background:${players[j].color}"></i>${k===0?"当前领先":`第${k+1}名`} · ${players[j].name}</div><strong>${fmt(v[j])}</strong><span class="hint">累计积分</span></div>`).join("");$("roundLabel").textContent=`已完成 ${rounds.length} 轮 · 当前排名按累计积分计算`}
+function renderRank(){let v=totals(),o=ranking(v),last=rounds.at(-1),prev=rounds.length>1?cumulative()[rounds.length-2]:null,po=prev?ranking(prev):null;$("ranking").innerHTML=o.map((j,k)=>{let ch="—",cl="same";if(po){let d=po.indexOf(j)-k;if(d>0){ch=`↑ 上升 ${d} 位`;cl="up"}else if(d<0){ch=`↓ 下降 ${-d} 位`;cl="down"}else ch="— 持平"}return `<tr><td class="rank">${k+1}</td><td><b style="color:${players[j].color}">${players[j].name}</b></td><td class="num">${fmt(v[j])}</td><td class="num">${fmt(last[j])}</td><td class="num ${cl}">${ch}</td></tr>`}).join("")}
+function renderHistory(){let s=$("roundSelect"),old=Number(s.value||rounds.length);s.innerHTML=rounds.map((_,i)=>`<option value="${i+1}">第 ${i+1} 轮</option>`).join("");s.value=String(Math.min(old,rounds.length));let k=+s.value-1,c=cumulative()[k],o=ranking(c);$("history").innerHTML=o.map((j,p)=>`<tr><td class="rank">${p+1}</td><td><b style="color:${players[j].color}">${players[j].name}</b></td><td class="num">${fmt(rounds[k][j])}</td><td class="num">${fmt(c[j])}</td></tr>`).join("");$("historySummary").textContent=`第 ${k+1} 轮结束时的排名与累计积分。`}
+function renderChart(){const svg=$("chart"),tip=$("tooltip"),W=960,H=390,L=75,R=135,T=28,B=58,all=cumulative().flat(),lo=Math.min(0,...all)-Math.max(5,(Math.max(...all)-Math.min(...all))*.12),hi=Math.max(10,...all)+Math.max(5,(Math.max(...all)-Math.min(...all))*.12),x=i=>L+(rounds.length===1?0:i*(W-L-R)/(rounds.length-1)),y=v=>T+(hi-v)*(H-T-B)/(hi-lo);let out="";for(let t=0;t<=5;t++){let v=lo+(hi-lo)*t/5,yy=y(v);out+=`<line class="gridline" x1="${L}" y1="${yy}" x2="${W-R+8}" y2="${yy}"/><text class="axis" x="${L-14}" y="${yy+4}" text-anchor="end">${fmt(v)}</text>`}out+=`<line x1="${L}" y1="${T}" x2="${L}" y2="${H-B}" stroke="#cbd5e1"/><line x1="${L}" y1="${H-B}" x2="${W-R+8}" y2="${H-B}" stroke="#cbd5e1"/>`;rounds.forEach((_,i)=>out+=`<text class="axis" x="${x(i)}" y="${H-B+27}" text-anchor="middle">第${i+1}轮</text>`);players.forEach((p,j)=>{let pts=cumulative().map((r,i)=>`${x(i)},${y(r[j])}`).join(" ");out+=`<polyline class="series" stroke="${p.color}" points="${pts}"/>`;cumulative().forEach((r,i)=>out+=`<circle class="point" cx="${x(i)}" cy="${y(r[j])}" r="7" fill="${p.color}" data-player="${j}" data-round="${i}" data-x="${x(i)}" data-y="${y(r[j])}"/>`);out+=`<text class="endpoint" x="${W-R+18}" y="${y(cumulative().at(-1)[j])+4}" fill="${p.color}">${p.name}</text>`});svg.innerHTML=out;svg.querySelectorAll(".point").forEach(pt=>{let show=()=>{let j=+pt.dataset.player,i=+pt.dataset.round;tip.innerHTML=`<b style="color:${players[j].color}">${players[j].name}</b><br>第 ${i+1} 轮<br>本轮：${fmt(rounds[i][j])} 分<br>累计：${fmt(cumulative()[i][j])} 分`;tip.style.display="block";let box=svg.getBoundingClientRect(),wrap=svg.parentElement.getBoundingClientRect();tip.style.left=Math.min(Math.max(4,+pt.dataset.x/960*box.width+box.left-wrap.left+12),wrap.width-150)+"px";tip.style.top=Math.max(0,+pt.dataset.y/390*box.height+box.top-wrap.top-15)+"px"};pt.addEventListener("mouseenter",show);pt.addEventListener("click",show);pt.addEventListener("mouseleave",()=>tip.style.display="none")})}
+function renderInputs(){$("inputs").innerHTML=players.map((p,i)=>`<div class="field"><label><i class="dot" style="background:${p.color}"></i>${p.name} · 本轮新增积分</label><input type="number" step="0.1" id="score${i}" placeholder="输入分数"></div>`).join("")}
+function render(){renderCards();renderRank();renderHistory();renderChart();renderInputs()}
+$("roundSelect").addEventListener("change",renderHistory);
+$("addRound").addEventListener("click",()=>{let row=players.map((_,i)=>$("score"+i).value.trim());if(row.some(v=>v==="")){alert("请填写四个人本轮新增积分。");return}rounds.push(row.map(Number));safeSave(rounds);render()});
+$("reset").addEventListener("click",()=>{if(confirm("恢复为只有第一轮的初始数据？")){rounds=initial.map(r=>r.slice());safeSave(rounds);render()}});
+$("exportCsv").addEventListener("click",()=>{let rows=[["轮次",...players.map(p=>p.name+"本轮积分"),...players.map(p=>p.name+"累计积分")]],cum=cumulative();rounds.forEach((r,i)=>rows.push([`第${i+1}轮`,...r,...cum[i]]));let csv="\uFEFF"+rows.map(r=>r.join(",")).join("\n"),a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download="四人积分记录.csv";a.click();URL.revokeObjectURL(a.href)});
+render();
+</script></body></html>
